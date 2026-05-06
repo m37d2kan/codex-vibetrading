@@ -1,0 +1,31 @@
+# Local browser profiles and caches
+chrome-cdp-profile/
+chrome-cdp-tv-profile/
+
+# Local downloads, logs, and scratch data
+pip-downloads/
+discord/
+*.log
+*.cache
+
+# Generated screenshots and temporary visual checks
+*.png
+
+# Local clones / external worktrees
+tradingview-mcp/
+tradingview-mcp-clean/
+
+# Secrets and environment files
+.env
+.env.*
+*.key
+*.pem
+
+# Python / virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local backups
+*.original-utf8.txt
