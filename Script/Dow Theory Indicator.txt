@@ -2,9 +2,10 @@
 indicator("Dow Theory Indicator", overlay=true,
      max_boxes_count=500, max_lines_count=500, max_labels_count=500, max_bars_back=5000)
 // ══════════════════════════════════════════════════════════════
-// Dow Theory Role Entry
-// SW3: 長期の地合い / SW2: 中期の調整 / SW1: 短期の転換 / TS: 実行タイミング
-// 既存のP&Bは素材シグナルとして残し、役割分担フィルター済みのエントリー候補を追加
+// Dow Theory Trading Strategy
+// SW2 戻り高値ブレイク → プルバック → 再上抜け → SW1 PB1ロング
+// SW2 押し安値ブレイク → バウンス  → 再下抜け → SW1 P1ショート
+// ベース: Dow Zone (SW1/SW2/SW3) インジケーター
 // ══════════════════════════════════════════════════════════════
 
 // ── ① スイング設定 ──
@@ -75,22 +76,6 @@ alertPB2Long       = input.bool(true, "SW2 PB1 Long(上昇波動)アラート", 
 alertPB2Short      = input.bool(true, "SW2 P1 Short(下落波動)アラート",  group=grpAlert)
 alertPB3Long       = input.bool(true, "SW3 PB1 Long(上昇波動)アラート",  group=grpAlert)
 alertPB3Short      = input.bool(true, "SW3 P1 Short(下落波動)アラート",  group=grpAlert)
-
-// ── ⑥ 役割分担エントリー ──
-grpEntry           = "⑥ 役割分担エントリー"
-showRoleEntry      = input.bool(true, "役割分担エントリー表示", group=grpEntry)
-entryTriggerMode   = input.string("SW1戻高/押安ブレイク", "SW1トリガー", options=["SW1戻高/押安ブレイク", "SW1 P&B", "どちらか"], group=grpEntry,
-     tooltip="SW1戻高/押安ブレイク=構造転換重視、SW1 P&B=早仕掛け、どちらか=両方を許可")
-entryConfirmedOnly = input.bool(true, "確定足のみ", group=grpEntry)
-requireTSConfirm   = input.bool(true, "TS同方向確認を必須", group=grpEntry)
-tsConfirmBars      = input.int(3, "TS確認の有効本数", minval=0, maxval=20, group=grpEntry)
-allowSW3FlatWave   = input.bool(false, "SW3 FLATでも波動方向を許可", group=grpEntry)
-allowSW2FlatPullback = input.bool(true, "SW2 FLATを調整として許可", group=grpEntry)
-showRoleSetup      = input.bool(false, "セットアップ待機マーク表示", group=grpEntry)
-roleLongColor      = input.color(color.blue, "DT-L 色", group=grpEntry)
-roleShortColor     = input.color(color.red, "DT-S 色", group=grpEntry)
-alertRoleLong      = input.bool(true, "DT-L アラート", group=grpEntry)
-alertRoleShort     = input.bool(true, "DT-S アラート", group=grpEntry)
 
 // ══════════════════════════════════════════════════════════════
 // 変数宣言
@@ -994,47 +979,6 @@ float turnPrice3 = pbState3 == "上昇波動" ? ta.lowest(low, length3)[1] : ta.
 string turnDir3  = pbState3 == "上昇波動" ? "↓" : "↑"
 
 // ══════════════════════════════════════════════════════════════
-// 役割分担エントリー
-// SW3=地合い、SW2=調整、SW1=転換、TS=実行タイミング
-// ══════════════════════════════════════════════════════════════
-bool sw3LongRegime = trend_status3 == "UP" or (allowSW3FlatWave and trend_status3 == "FLAT" and pbState3 == "上昇波動")
-bool sw3ShortRegime = trend_status3 == "DOWN" or (allowSW3FlatWave and trend_status3 == "FLAT" and pbState3 == "下落波動")
-bool sw3LongDefense = na(oshiYasune3) or (not oshiBroken3 and close > oshiYasune3)
-bool sw3ShortDefense = na(modoriTakane3) or (not modoriBroken3 and close < modoriTakane3)
-
-bool sw2LongPullback = pbState2 == "下落波動" or (allowSW2FlatPullback and trend_status2 == "FLAT")
-bool sw2ShortPullback = pbState2 == "上昇波動" or (allowSW2FlatPullback and trend_status2 == "FLAT")
-
-bool sw1LongBreakTrigger = modoriBreakSignal1
-bool sw1ShortBreakTrigger = oshiBreakSignal1
-bool sw1LongPBTrigger = bottomCondition1
-bool sw1ShortPBTrigger = peakCondition1
-bool sw1LongTrigger = entryTriggerMode == "SW1戻高/押安ブレイク" ? sw1LongBreakTrigger : entryTriggerMode == "SW1 P&B" ? sw1LongPBTrigger : (sw1LongBreakTrigger or sw1LongPBTrigger)
-bool sw1ShortTrigger = entryTriggerMode == "SW1戻高/押安ブレイク" ? sw1ShortBreakTrigger : entryTriggerMode == "SW1 P&B" ? sw1ShortPBTrigger : (sw1ShortBreakTrigger or sw1ShortPBTrigger)
-
-int tsLongBars = ta.barssince(bottomConditionTS)
-int tsShortBars = ta.barssince(peakConditionTS)
-bool tsLongRecent = not na(tsLongBars) and tsLongBars <= tsConfirmBars
-bool tsShortRecent = not na(tsShortBars) and tsShortBars <= tsConfirmBars
-bool tsLongOK = not requireTSConfirm or tsLongRecent
-bool tsShortOK = not requireTSConfirm or tsShortRecent
-bool entryBarOK = not entryConfirmedOnly or barstate.isconfirmed
-
-bool roleLongSetup = sw3LongRegime and sw3LongDefense and sw2LongPullback
-bool roleShortSetup = sw3ShortRegime and sw3ShortDefense and sw2ShortPullback
-bool roleLongEntry = showRoleEntry and entryBarOK and roleLongSetup and sw1LongTrigger and tsLongOK
-bool roleShortEntry = showRoleEntry and entryBarOK and roleShortSetup and sw1ShortTrigger and tsShortOK
-
-plotshape(showRoleSetup and roleLongSetup and not roleLongEntry, title="DT Long Setup", style=shape.circle, location=location.belowbar,
-     color=color.new(roleLongColor, 65), size=size.tiny)
-plotshape(showRoleSetup and roleShortSetup and not roleShortEntry, title="DT Short Setup", style=shape.circle, location=location.abovebar,
-     color=color.new(roleShortColor, 65), size=size.tiny)
-plotshape(roleLongEntry, title="DT Long Entry", style=shape.labelup, location=location.belowbar,
-     color=roleLongColor, text="DT-L", textcolor=color.white, size=size.small)
-plotshape(roleShortEntry, title="DT Short Entry", style=shape.labeldown, location=location.abovebar,
-     color=roleShortColor, text="DT-S", textcolor=color.white, size=size.small)
-
-// ══════════════════════════════════════════════════════════════
 // トレンドテーブル表示
 // ══════════════════════════════════════════════════════════════
 var table trendTable = na
@@ -1124,7 +1068,3 @@ alertcondition(oshiBreakSignal2, "SW2 押し安値ブレイク", "SW2 押し安�
 alertcondition(modoriBreakSignal2, "SW2 戻り高値ブレイク", "SW2 戻り高値ブレイク")
 alertcondition(oshiBreakSignal3, "SW3 押し安値ブレイク", "SW3 押し安値ブレイク")
 alertcondition(modoriBreakSignal3, "SW3 戻り高値ブレイク", "SW3 戻り高値ブレイク")
-
-// ── 役割分担エントリーアラート ──
-alertcondition(alertRoleLong and roleLongEntry, "DT-L 役割分担ロング", "DT-L: SW3上位地合い + SW2調整 + SW1上方向転換 + TS確認")
-alertcondition(alertRoleShort and roleShortEntry, "DT-S 役割分担ショート", "DT-S: SW3下位地合い + SW2調整 + SW1下方向転換 + TS確認")
