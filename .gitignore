@@ -10,6 +10,7 @@ discord/
 
 # Generated screenshots and temporary visual checks
 *.png
+screenshots/
 
 # Local clones / external worktrees
 tradingview-mcp/
