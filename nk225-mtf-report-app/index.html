@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MTFダウ理論レポート</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Dow Theory Indicator</p>
+      <h1>MTFダウ理論レポート</h1>
+    </div>
+    <div class="status-pill" id="saveStatus">未生成</div>
+  </header>
+
+  <main class="app-shell">
+    <section class="workspace" aria-label="入力">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>チャート</h2>
+          <button type="button" class="ghost-button" id="clearImages">画像クリア</button>
+        </div>
+        <div class="upload-grid">
+          <label class="upload-card">
+            <span>長期</span>
+            <input id="chart4h" type="file" accept="image/*">
+            <img id="preview4h" alt="">
+          </label>
+          <label class="upload-card">
+            <span>中期</span>
+            <input id="chart1h" type="file" accept="image/*">
+            <img id="preview1h" alt="">
+          </label>
+          <label class="upload-card">
+            <span>短期</span>
+            <input id="chart15m" type="file" accept="image/*">
+            <img id="preview15m" alt="">
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>自動読取補助</h2>
+        </div>
+        <div class="ai-read-box">
+          <label>OpenAI APIキー<input id="openaiApiKey" type="password" autocomplete="off" placeholder="sk-..."></label>
+          <button type="button" class="primary-button" id="readImagesAi">AI Visionで高精度読取</button>
+        </div>
+        <div class="helper-actions">
+          <button type="button" id="saveApiKey">APIキー保存</button>
+          <button type="button" id="clearApiKey">APIキー削除</button>
+          <button type="button" id="toggleApiKey">キー表示</button>
+        </div>
+        <textarea id="ocrText" rows="5" placeholder="AI Visionの読取メモがここに入る" readonly></textarea>
+        <div class="ocr-progress" id="ocrProgress">画像AI読取は未実行</div>
+        <p class="helper-note">OpenAI APIキーはこのブラウザに保持する。画像はAI Vision読取時だけ送信する。</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>基本情報</h2>
+        </div>
+        <div class="form-grid">
+          <label>作成日時<input id="reportTime" type="datetime-local"></label>
+          <label>現値<input id="currentPrice" type="text" inputmode="numeric" placeholder="62,140"></label>
+          <label>分析対象<input id="instrument" type="text" value="NK225先物"></label>
+          <label>レポートタイトル<input id="reportTitle" type="text" value="NK225先物 MTFダウ理論分析レポート"></label>
+          <label>作成者メモ<input id="authorMemo" type="text" placeholder="ナイト引け / 日中引け など"></label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Trend Table</h2>
+          <button type="button" class="ghost-button" id="swapMobileOrder">スマホ画像向け</button>
+        </div>
+        <div class="trend-stack" id="trendInputs"></div>
+      </div>
+
+    </section>
+
+    <section class="preview" aria-label="出力">
+      <div class="action-bar">
+        <button type="button" class="primary-button" id="generate">レポート生成</button>
+        <button type="button" id="downloadHtml">HTML保存</button>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-target="htmlPane">レポート</button>
+        <button type="button" class="tab" data-target="imagePane">画像確認</button>
+      </div>
+
+      <div id="htmlPane" class="tab-pane active">
+        <iframe id="reportFrame" title="レポートプレビュー"></iframe>
+      </div>
+      <div id="imagePane" class="tab-pane">
+        <div class="image-review">
+          <img id="review4h" alt="">
+          <img id="review1h" alt="">
+          <img id="review15m" alt="">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
