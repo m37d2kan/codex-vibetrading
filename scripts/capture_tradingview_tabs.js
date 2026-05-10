@@ -6,7 +6,7 @@ const path = require("path");
 
 const CDP_HOST = process.env.CDP_HOST || "127.0.0.1";
 const CDP_PORT = Number(process.env.CDP_PORT || 9222);
-const DEFAULT_OUT_DIR = "C:\\Users\\m37d2\\OneDrive\\画像\\Screenshots\\tradingview";
+const DEFAULT_OUT_DIR = "C:\\Users\\m37d2\\OneDrive\\Pictures\\Screenshots\\tradingview";
 const DEFAULT_LABELS = ["NK225-4h", "NK225-1h", "NK225-15m"];
 
 function argValue(name, fallback) {
