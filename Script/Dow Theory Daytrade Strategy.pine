@@ -931,6 +931,11 @@ if goLong
     strategy.entry("L", strategy.long, qty=qtyLongUse)
     origSL := slLongCand
     origTP := useTP ? close + (close - slLongCand) * tpRR : na
+    curSL  := origSL
+    // エントリーと同じバーで決済注文を出す。保有が見えるのは次バーなので、
+    // ここで出さないと約定直後の1本が無防備になる。
+    strategy.exit("X-L", from_entry="L", stop=origSL, limit=origTP,
+         comment_loss="SL", comment_profit="TP")
     array.push(tEntryBar, bar_index)
     array.push(tRegime, trend_status3)
     array.push(tDir, "LONG")
@@ -946,6 +951,9 @@ if goShort
     strategy.entry("S", strategy.short, qty=qtyShortUse)
     origSL := slShortCand
     origTP := useTP ? close - (slShortCand - close) * tpRR : na
+    curSL  := origSL
+    strategy.exit("X-S", from_entry="S", stop=origSL, limit=origTP,
+         comment_loss="SL", comment_profit="TP")
     array.push(tEntryBar, bar_index)
     array.push(tRegime, trend_status3)
     array.push(tDir, "SHORT")
@@ -970,10 +978,10 @@ if justOpened
     wickTP   := false
     beMoved  := false
     barsHeld := 0
-    curSL    := origSL
-    // 実約定価格ベースの1Rで利確を張り直す
-    if useTP and riskPts > 0
-        origTP := strategy.position_size > 0 ? entryPx + riskPts * tpRR : entryPx - riskPts * tpRR
+    curSL    := nz(curSL, origSL)
+    // SL/TP はシグナル時点で決めた価格のまま動かさない（計画は計画）。
+    // ただし R の基準だけは実約定価格から取り直す。スリッページ込みの
+    // 実際のリスクで正規化しないと、期待値Rが実態より良く出る。
     if array.size(tRiskPts) > 0 and riskPts > 0
         array.set(tRiskPts, array.size(tRiskPts) - 1, riskPts)
 
